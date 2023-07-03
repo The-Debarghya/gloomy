@@ -1,6 +1,7 @@
 package gologger
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -23,6 +24,11 @@ type Logger struct {
 	closers     []io.Closer
 	initialized bool
 	level       Level
+}
+
+type Verbose struct {
+	enabled bool
+	logger  *Logger
 }
 
 const (
@@ -129,8 +135,47 @@ func Init(name string, verbose, systemLog bool, logFd io.Writer) *Logger {
 
 }
 
-
 // Close closes the default logger.
 func Close() {
 	defaultLogger.Close()
 }
+
+
+func (l *Logger) output(s severity, depth int, txt string) {
+	logLock.Lock()
+	defer logLock.Unlock()
+	switch s {
+		case sInfo:
+			l.infoLog.Output(3+depth, txt)
+		case sWarn:
+			l.warningLog.Output(3+depth, txt)
+		case sError:
+			l.errorLog.Output(3+depth, txt)
+		case sFatal:
+			l.fatalLog.Output(3+depth, txt)
+		default:
+			panic(fmt.Sprintln("[FATAL]: Unrecognized Severity:", s))
+	}
+}
+
+/* 
+Close closes all log writers and will flush any cached logs.
+Errors from closing the underlying log writers will be printed to stderr.
+Once Close is called, all future calls to the logger will panic. 
+*/
+func (l *Logger) Close() {
+	logLock.Lock()
+	defer logLock.Unlock()
+
+	if !l.initialized {
+		return
+	}
+
+	for _, c := range l.closers {
+		if err := c.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "[ERROR]: Failed to close log %v: %v\n", c, err)
+		}
+	}
+}
+
+
