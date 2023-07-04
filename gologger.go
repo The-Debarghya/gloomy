@@ -18,7 +18,7 @@ type Level int
 // simultaneously even if they are using the same writers.
 type Logger struct {
 	infoLog     *log.Logger
-	warningLog  *log.Logger
+	warnLog  *log.Logger
 	errorLog    *log.Logger
 	fatalLog    *log.Logger
 	closers     []io.Closer
@@ -60,7 +60,7 @@ var (
 func init_logger() {
 	defaultLogger = &Logger{
 		infoLog:    log.New(os.Stderr, initText+labelInfo, flags),
-		warningLog: log.New(os.Stderr, initText+labelWarn, flags),
+		warnLog: log.New(os.Stderr, initText+labelWarn, flags),
 		errorLog:   log.New(os.Stderr, initText+labelErr, flags),
 		fatalLog:   log.New(os.Stderr, initText+labelFatal, flags),
 	}
@@ -107,7 +107,7 @@ func Init(name string, verbose, systemLog bool, logFd io.Writer) *Logger {
 
 	l := Logger{
 		infoLog:    log.New(io.MultiWriter(iLogs...), labelInfo, flags),
-		warningLog: log.New(io.MultiWriter(wLogs...), labelWarn, flags),
+		warnLog: log.New(io.MultiWriter(wLogs...), labelWarn, flags),
 		errorLog:   log.New(io.MultiWriter(eLogs...), labelErr, flags),
 		fatalLog:   log.New(io.MultiWriter(eLogs...), labelFatal, flags),
 	}
@@ -148,7 +148,7 @@ func (l *Logger) output(s severity, depth int, txt string) {
 		case sInfo:
 			l.infoLog.Output(3+depth, txt)
 		case sWarn:
-			l.warningLog.Output(3+depth, txt)
+			l.warnLog.Output(3+depth, txt)
 		case sError:
 			l.errorLog.Output(3+depth, txt)
 		case sFatal:
@@ -178,4 +178,55 @@ func (l *Logger) Close() {
 	}
 }
 
+/**  INFO LOGS **/
 
+// Info level logs.
+// Arguments according to fmt.Print.
+func (l *Logger) Info(v ...interface{}) {
+	l.output(sInfo, 0, fmt.Sprint(v...))
+}
+
+// InfoDepth acts as Info but uses depth to determine which call frame to log.
+// InfoDepth called with depth 0 is equivalent to Info.
+func (l *Logger) InfoDepth(depth int, v ...interface{}) {
+	l.output(sInfo, depth, fmt.Sprint(v...))
+}
+
+// Infoln logs with the Info severity.
+// Arguments according to fmt.Println.
+func (l *Logger) Infoln(v ...interface{}) {
+	l.output(sInfo, 0, fmt.Sprintln(v...))
+}
+
+// Infof logs with the Info severity.
+// Arguments according to fmt.Printf.
+func (l *Logger) Infof(format string, v ...interface{}) {
+	l.output(sInfo, 0, fmt.Sprintf(format, v...))
+}
+
+
+/*  WARNING LOGS  */
+
+// Warning level logs.
+// Arguments according to fmt.Print.
+func (l *Logger) Warning(v ...interface{}) {
+	l.output(sWarn, 0, fmt.Sprint(v...))
+}
+
+// WarningDepth acts as Warning but uses depth to determine which call frame to log.
+// WarningDepth called with depth 0 is equivalent to Warning.
+func (l *Logger) WarningDepth(depth int, v ...interface{}) {
+	l.output(sWarn, depth, fmt.Sprint(v...))
+}
+
+// Warningln logs with the Warning severity.
+// Arguments according to fmt.Println.
+func (l *Logger) Warningln(v ...interface{}) {
+	l.output(sWarn, 0, fmt.Sprintln(v...))
+}
+
+// Warningf logs with the Warning severity.
+// Arguments according to fmt.Printf.
+func (l *Logger) Warningf(format string, v ...interface{}) {
+	l.output(sWarn, 0, fmt.Sprintf(format, v...))
+}
