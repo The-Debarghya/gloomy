@@ -18,7 +18,7 @@ type Level int
 // simultaneously even if they are using the same writers.
 type Logger struct {
 	infoLog     *log.Logger
-	warnLog  *log.Logger
+	warnLog     *log.Logger
 	errorLog    *log.Logger
 	fatalLog    *log.Logger
 	closers     []io.Closer
@@ -59,10 +59,10 @@ var (
 // reset default logger for tests to reset environment
 func init_logger() {
 	defaultLogger = &Logger{
-		infoLog:    log.New(os.Stderr, initText+labelInfo, flags),
-		warnLog: log.New(os.Stderr, initText+labelWarn, flags),
-		errorLog:   log.New(os.Stderr, initText+labelErr, flags),
-		fatalLog:   log.New(os.Stderr, initText+labelFatal, flags),
+		infoLog:  log.New(os.Stderr, initText+labelInfo, flags),
+		warnLog:  log.New(os.Stderr, initText+labelWarn, flags),
+		errorLog: log.New(os.Stderr, initText+labelErr, flags),
+		fatalLog: log.New(os.Stderr, initText+labelFatal, flags),
 	}
 }
 
@@ -106,10 +106,10 @@ func Init(name string, verbose, systemLog bool, logFd io.Writer) *Logger {
 	}
 
 	l := Logger{
-		infoLog:    log.New(io.MultiWriter(iLogs...), labelInfo, flags),
-		warnLog: log.New(io.MultiWriter(wLogs...), labelWarn, flags),
-		errorLog:   log.New(io.MultiWriter(eLogs...), labelErr, flags),
-		fatalLog:   log.New(io.MultiWriter(eLogs...), labelFatal, flags),
+		infoLog:  log.New(io.MultiWriter(iLogs...), labelInfo, flags),
+		warnLog:  log.New(io.MultiWriter(wLogs...), labelWarn, flags),
+		errorLog: log.New(io.MultiWriter(eLogs...), labelErr, flags),
+		fatalLog: log.New(io.MultiWriter(eLogs...), labelFatal, flags),
 	}
 	for _, w := range []io.Writer{logFd, il, wl, el} {
 		c, ok := w.(io.Closer)
@@ -140,28 +140,27 @@ func Close() {
 	defaultLogger.Close()
 }
 
-
 func (l *Logger) output(s severity, depth int, txt string) {
 	logLock.Lock()
 	defer logLock.Unlock()
 	switch s {
-		case sInfo:
-			l.infoLog.Output(3+depth, txt)
-		case sWarn:
-			l.warnLog.Output(3+depth, txt)
-		case sError:
-			l.errorLog.Output(3+depth, txt)
-		case sFatal:
-			l.fatalLog.Output(3+depth, txt)
-		default:
-			panic(fmt.Sprintln("[FATAL]: Unrecognized Severity:", s))
+	case sInfo:
+		l.infoLog.Output(3+depth, txt)
+	case sWarn:
+		l.warnLog.Output(3+depth, txt)
+	case sError:
+		l.errorLog.Output(3+depth, txt)
+	case sFatal:
+		l.fatalLog.Output(3+depth, txt)
+	default:
+		panic(fmt.Sprintln("[FATAL]: Unrecognized Severity:", s))
 	}
 }
 
-/* 
+/*
 Close closes all log writers and will flush any cached logs.
 Errors from closing the underlying log writers will be printed to stderr.
-Once Close is called, all future calls to the logger will panic. 
+Once Close is called, all future calls to the logger will panic.
 */
 func (l *Logger) Close() {
 	logLock.Lock()
@@ -192,18 +191,17 @@ func (l *Logger) InfoDepth(depth int, v ...interface{}) {
 	l.output(sInfo, depth, fmt.Sprint(v...))
 }
 
-// Infoln logs with the Info severity.
+// Newline appended info level logs.
 // Arguments according to fmt.Println.
 func (l *Logger) Infoln(v ...interface{}) {
 	l.output(sInfo, 0, fmt.Sprintln(v...))
 }
 
-// Infof logs with the Info severity.
+// Formatted info level logs.
 // Arguments according to fmt.Printf.
 func (l *Logger) Infof(format string, v ...interface{}) {
 	l.output(sInfo, 0, fmt.Sprintf(format, v...))
 }
-
 
 /*  WARNING LOGS  */
 
@@ -219,14 +217,113 @@ func (l *Logger) WarningDepth(depth int, v ...interface{}) {
 	l.output(sWarn, depth, fmt.Sprint(v...))
 }
 
-// Warningln logs with the Warning severity.
+// Newline appended warning level logs.
 // Arguments according to fmt.Println.
 func (l *Logger) Warningln(v ...interface{}) {
 	l.output(sWarn, 0, fmt.Sprintln(v...))
 }
 
-// Warningf logs with the Warning severity.
+// Formatted warning level logs.
 // Arguments according to fmt.Printf.
 func (l *Logger) Warningf(format string, v ...interface{}) {
 	l.output(sWarn, 0, fmt.Sprintf(format, v...))
+}
+
+/*  ERROR LOGS  */
+
+// Error level logs.
+// Arguments according to fmt.Print.
+func (l *Logger) Error(v ...interface{}) {
+	l.output(sError, 0, fmt.Sprint(v...))
+}
+
+// ErrorDepth acts as Error but uses depth to determine which call frame to log.
+// ErrorDepth called with depth 0 is equivalent to Error.
+func (l *Logger) ErrorDepth(depth int, v ...interface{}) {
+	l.output(sError, depth, fmt.Sprint(v...))
+}
+
+// Newline appended error level logs.
+// Arguments according to fmt.Println.
+func (l *Logger) Errorln(v ...interface{}) {
+	l.output(sError, 0, fmt.Sprintln(v...))
+}
+
+// Formatted error level logs.
+// Arguments according to fmt.Printf.
+func (l *Logger) Errorf(format string, v ...interface{}) {
+	l.output(sError, 0, fmt.Sprintf(format, v...))
+}
+
+/*  FATAL LOGS  */
+
+// Fatal level logs which terminates with os.Exit(1).
+// Arguments according to fmt.Print.
+func (l *Logger) Fatal(v ...interface{}) {
+	l.output(sFatal, 0, fmt.Sprint(v...))
+	l.Close()
+	os.Exit(1)
+}
+
+// FatalDepth acts as Fatal but uses depth to determine which call frame to log.
+// FatalDepth called with depth 0 is equivalent to Fatal.
+func (l *Logger) FatalDepth(depth int, v ...interface{}) {
+	l.output(sFatal, depth, fmt.Sprint(v...))
+	l.Close()
+	os.Exit(1)
+}
+
+// Newline appended Fatal level logs which terminates with os.Exit(1).
+// Arguments according to fmt.Println.
+func (l *Logger) Fatalln(v ...interface{}) {
+	l.output(sFatal, 0, fmt.Sprintln(v...))
+	l.Close()
+	os.Exit(1)
+}
+
+// Formatted Fatal level logs terminates with os.Exit(1).
+// Arguments according to fmt.Printf.
+func (l *Logger) Fatalf(format string, v ...interface{}) {
+	l.output(sFatal, 0, fmt.Sprintf(format, v...))
+	l.Close()
+	os.Exit(1)
+}
+
+
+// Set the logger verbosity level for verbose info logging.
+func (l *Logger) SetLevel(lvl Level) {
+	l.level = lvl
+	l.output(sInfo, 0, fmt.Sprintf("Info verbosity set to %d", lvl))
+}
+
+// Verbosity generates a log record depends on the setting of the Level; or none default.
+// It uses the specified logger.
+func (l *Logger) Verbosity(lvl Level) Verbose {
+	return Verbose{
+		enabled: l.level >= lvl,
+		logger:  l,
+	}
+}
+
+// Info is equivalent to Info function, when verbosity(v) is enabled.
+func (v Verbose) Info(args ...interface{}) {
+	if v.enabled {
+		v.logger.output(sInfo, 0, fmt.Sprint(args...))
+	}
+}
+
+// Infoln is equivalent to Infoln function, when verbosity(v) is enabled.
+// See the docs of Verbosity for usage.
+func (v Verbose) Infoln(args ...interface{}) {
+	if v.enabled {
+		v.logger.output(sInfo, 0, fmt.Sprintln(args...))
+	}
+}
+
+// Infof is equivalent to Infof function, when verbosity(v) is enabled.
+// See the docs of Verbosity for usage.
+func (v Verbose) Infof(format string, args ...interface{}) {
+	if v.enabled {
+		v.logger.output(sInfo, 0, fmt.Sprintf(format, args...))
+	}
 }
