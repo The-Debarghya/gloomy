@@ -203,6 +203,30 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 	l.output(sInfo, 0, fmt.Sprintf(format, v...))
 }
 
+// Info level logs.
+// Arguments according to fmt.Print.
+func Info(v ...interface{}) {
+	defaultLogger.output(sInfo, 0, fmt.Sprint(v...))
+}
+
+// InfoDepth acts as Info but uses depth to determine which call frame to log.
+// InfoDepth called with depth 0 is equivalent to Info.
+func InfoDepth(depth int, v ...interface{}) {
+	defaultLogger.output(sInfo, depth, fmt.Sprint(v...))
+}
+
+// Newline appended info level logs.
+// Arguments according to fmt.Println.
+func Infoln(v ...interface{}) {
+	defaultLogger.output(sInfo, 0, fmt.Sprintln(v...))
+}
+
+// Formatted info level logs.
+// Arguments according to fmt.Printf.
+func Infof(format string, v ...interface{}) {
+	defaultLogger.output(sInfo, 0, fmt.Sprintf(format, v...))
+}
+
 /*  WARNING LOGS  */
 
 // Warning level logs.
@@ -229,6 +253,30 @@ func (l *Logger) Warningf(format string, v ...interface{}) {
 	l.output(sWarn, 0, fmt.Sprintf(format, v...))
 }
 
+// Warning level logs.
+// Arguments according to fmt.Print.
+func Warning(v ...interface{}) {
+	defaultLogger.output(sWarn, 0, fmt.Sprint(v...))
+}
+
+// WarningDepth acts as Warning but uses depth to determine which call frame to log.
+// WarningDepth called with depth 0 is equivalent to Warning.
+func WarningDepth(depth int, v ...interface{}) {
+	defaultLogger.output(sWarn, depth, fmt.Sprint(v...))
+}
+
+// Newline appended warning level logs.
+// Arguments according to fmt.Println.
+func Warningln(v ...interface{}) {
+	defaultLogger.output(sWarn, 0, fmt.Sprintln(v...))
+}
+
+// Formatted warning level logs.
+// Arguments according to fmt.Printf.
+func Warningf(format string, v ...interface{}) {
+	defaultLogger.output(sWarn, 0, fmt.Sprintf(format, v...))
+}
+
 /*  ERROR LOGS  */
 
 // Error level logs.
@@ -253,6 +301,30 @@ func (l *Logger) Errorln(v ...interface{}) {
 // Arguments according to fmt.Printf.
 func (l *Logger) Errorf(format string, v ...interface{}) {
 	l.output(sError, 0, fmt.Sprintf(format, v...))
+}
+
+// Error level logs.
+// Arguments according to fmt.Print.
+func Error(v ...interface{}) {
+	defaultLogger.output(sError, 0, fmt.Sprint(v...))
+}
+
+// ErrorDepth acts as Error but uses depth to determine which call frame to log.
+// ErrorDepth called with depth 0 is equivalent to Error.
+func ErrorDepth(depth int, v ...interface{}) {
+	defaultLogger.output(sError, depth, fmt.Sprint(v...))
+}
+
+// Newline appended error level logs.
+// Arguments according to fmt.Println.
+func Errorln(v ...interface{}) {
+	defaultLogger.output(sError, 0, fmt.Sprintln(v...))
+}
+
+// Formatted error level logs.
+// Arguments according to fmt.Printf.
+func Errorf(format string, v ...interface{}) {
+	defaultLogger.output(sError, 0, fmt.Sprintf(format, v...))
 }
 
 /*  FATAL LOGS  */
@@ -289,12 +361,52 @@ func (l *Logger) Fatalf(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+// Fatal level logs which terminates with os.Exit(1).
+// Arguments according to fmt.Print.
+func Fatal(v ...interface{}) {
+	defaultLogger.output(sFatal, 0, fmt.Sprint(v...))
+	defaultLogger.Close()
+	os.Exit(1)
+}
+
+// FatalDepth acts as Fatal but uses depth to determine which call frame to log.
+// FatalDepth called with depth 0 is equivalent to Fatal.
+func FatalDepth(depth int, v ...interface{}) {
+	defaultLogger.output(sFatal, depth, fmt.Sprint(v...))
+	defaultLogger.Close()
+	os.Exit(1)
+}
+
+// Newline appended Fatal level logs which terminates with os.Exit(1).
+// Arguments according to fmt.Println.
+func Fatalln(v ...interface{}) {
+	defaultLogger.output(sFatal, 0, fmt.Sprintln(v...))
+	defaultLogger.Close()
+	os.Exit(1)
+}
+
+// Formatted Fatal level logs terminates with os.Exit(1).
+// Arguments according to fmt.Printf.
+func Fatalf(format string, v ...interface{}) {
+	defaultLogger.output(sFatal, 0, fmt.Sprintf(format, v...))
+	defaultLogger.Close()
+	os.Exit(1)
+}
+
 
 // Set the logger verbosity level for verbose info logging.
 func (l *Logger) SetLevel(lvl Level) {
 	l.level = lvl
 	l.output(sInfo, 0, fmt.Sprintf("Info verbosity set to %d", lvl))
 }
+
+// Sets the verbosity level for verbose info logging for the
+// default logger.
+func SetLevel(lvl Level) {
+	defaultLogger.SetLevel(lvl)
+}
+
+/* VERBOSE LOGGING */
 
 // Verbosity generates a log record depends on the setting of the Level; or none default.
 // It uses the specified logger.
@@ -303,6 +415,12 @@ func (l *Logger) Verbosity(lvl Level) Verbose {
 		enabled: l.level >= lvl,
 		logger:  l,
 	}
+}
+
+// Verbosity generates a log record, depends on the setting of the Level; or none
+// by default using the default logger.
+func Verbosity(lvl Level) Verbose {
+	return defaultLogger.Verbosity(lvl)
 }
 
 // Info is equivalent to Info function, when verbosity(v) is enabled.
@@ -327,3 +445,12 @@ func (v Verbose) Infof(format string, args ...interface{}) {
 		v.logger.output(sInfo, 0, fmt.Sprintf(format, args...))
 	}
 }
+
+// Sets the output flags for the logger.
+func SetFlags(flag int) {
+	defaultLogger.infoLog.SetFlags(flag)
+	defaultLogger.warnLog.SetFlags(flag)
+	defaultLogger.errorLog.SetFlags(flag)
+	defaultLogger.fatalLog.SetFlags(flag)
+}
+
