@@ -119,8 +119,6 @@ func Init(name string, verbose, systemLog bool, logFd io.Writer) *Logger {
 	}
 	l.initialized = true
 
-	l.initialized = true
-
 	if syslogErr != nil {
 		l.Error(syslogErr)
 	}
