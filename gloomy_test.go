@@ -1,4 +1,4 @@
-package gologger
+package gloomy
 
 import (
 	"bufio"

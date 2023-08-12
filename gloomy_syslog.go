@@ -1,5 +1,5 @@
 //go:build unix
-package gologger
+package gloomy
 
 import (
 	"io"
