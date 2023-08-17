@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"sync"
+
+	"github.com/fatih/color"
 )
 
 // severity of logs
@@ -38,12 +40,20 @@ const (
 	sFatal
 )
 
+// colors
+var (
+	yellow = color.New(color.FgYellow).SprintFunc()
+	red = color.New(color.FgRed).SprintFunc()
+	green = color.New(color.FgGreen).SprintFunc()
+	boldRed = color.New(color.FgHiRed).SprintFunc()
+)
+
 // severity labels
-const (
-	labelInfo  = "[INFO]: "
-	labelWarn  = "[WARN]: "
-	labelErr   = "[ERROR]: "
-	labelFatal = "[FATAL]: "
+var (
+	labelInfo  = "[" + green("INFO") + "]: "
+	labelWarn  = "[" + yellow("WARN") + "]: "
+	labelErr   = "[" + red("ERROR") + "]: "
+	labelFatal = "[" + boldRed("FATAL") + "]: "
 )
 
 const (
@@ -151,7 +161,7 @@ func (l *Logger) output(s severity, depth int, txt string) {
 	case sFatal:
 		l.fatalLog.Output(3+depth, txt)
 	default:
-		panic(fmt.Sprintln("[FATAL]: Unrecognized Severity:", s))
+		panic(fmt.Sprintln("[" + boldRed("FATAL") + "]: Unrecognized Severity:", s))
 	}
 }
 
@@ -170,7 +180,7 @@ func (l *Logger) Close() {
 
 	for _, c := range l.closers {
 		if err := c.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "[ERROR]: Failed to close log %v: %v\n", c, err)
+			fmt.Fprintf(os.Stderr, "[" + red("ERROR") + "]: Failed to close log %v: %v\n", c, err)
 		}
 	}
 }
